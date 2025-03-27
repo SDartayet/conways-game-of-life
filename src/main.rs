@@ -1,3 +1,5 @@
+use std::{collections::btree_map::Range, ops::RangeInclusive};
+
 #[derive(Clone, PartialEq)]
 enum CellState {
     Alive,
@@ -39,13 +41,13 @@ impl Board {
         }
     }
 
-    fn update_cell_state (&self, old_board:&Board, x: usize, y: usize) {
+    fn update_cell_state (&mut self, old_board:&Board, x: usize, y: usize) {
 
         // Creates offset ranges for the neighbours, based on which offsets would be valid for the current position, so as to prevent overflow or underflow of indexes
 
-        let x_offsets: std::ops::Range<i8> = if x > 1 && x < BOARD_WIDTH-1 { -1..2 } 
+        let x_offsets: std::ops::Range<isize> = if x > 1 && x < BOARD_WIDTH-1 { -1..2 } 
         else if x > 1 { -1..1 } else { 0..2 };
-        let y_offsets: std::ops::Range<i8> = if y > 1 && y < BOARD_WIDTH-1 { -1..2 } 
+        let y_offsets: std::ops::Range<isize> = if y > 1 && y < BOARD_WIDTH-1 { -1..2 } 
         else if y > 1 { -1..1 } else { 0..2 };
         
         // Go through each neighbour and count the alive ones
@@ -53,14 +55,15 @@ impl Board {
         for x_offset in x_offsets {
             for y_offset in y_offsets.clone() {
                 if (x_offset == 0 && y_offset == 0) { continue; }
-                if (old_board.0[y + y_offset][x + x_offset].1 == CellState::Alive ) { alive_neighbours += 1; }
+                //I use the overflowing adds so I can add a signed and unsigned integer, since I know oveflow/underflow aren't a risk
+                if (old_board.0[y.overflowing_add_signed(y_offset).0][x.overflowing_add_signed(x_offset).0] == CellState::Alive ) { alive_neighbours += 1; }
 
                 //Change the cell state according to the number of neighbours
                 match alive_neighbours {
-                    0..2 => { self.0[y][x] = CellState::Dead; },
-                    2..3 => {},
-                    3..5 => { self.0[y][x] = CellState::Alive; },
-                    5.. => { self.0[y][x] = CellState::Dead; }
+                    0..=1 => { self.0[y][x] = CellState::Dead; },
+                    3..=3 => { self.0[y][x] = CellState::Alive; },
+                    4..=8 => { self.0[y][x] = CellState::Dead; },
+                    _ => {}
                 }
             }
         }
