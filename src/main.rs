@@ -1,6 +1,6 @@
 use std::{collections::btree_map::Range, ops::RangeInclusive};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 enum CellState {
     Alive,
     Dead
@@ -19,11 +19,18 @@ impl Board {
         Board(board)
     }
 
+    /// Returns the status of a cell, given its coordinates
+    /// Input: x and y coordinates of the cell
+    /// Output: whether the cell is dead or alive
+    fn get_cell_status(&self, x: usize, y: usize) -> CellState {
+        self.0[y][x].clone()
+    }
+
     /// Swaps a specific position in an already existing board.
     /// Input: a mutable reference to the board, and the row and column of the cell to update
     /// NOT the cell udpate function, this one is intended to be used for the user to manually flip the states of cells before the game starts
     fn swap_cell_state(&mut self, x: usize, y: usize) {
-        if self.0[col][row] == CellState::Alive { self.0[col][row] = CellState::Dead; } else { self.0[col][row] = CellState::Alive ;}
+        if self.0[y][x] == CellState::Alive { self.0[y][x] = CellState::Dead; } else { self.0[y][x] = CellState::Alive ;}
     }
 
     /// Updates the states of every cell in the board
@@ -45,9 +52,9 @@ impl Board {
 
         // Creates offset ranges for the neighbours, based on which offsets would be valid for the current position, so as to prevent overflow or underflow of indexes
 
-        let x_offsets: std::ops::Range<isize> = if x > 1 && x < BOARD_WIDTH-1 { -1..2 } 
+        let x_offsets: std::ops::Range<isize> = if x > 0 && x < BOARD_WIDTH-1 { -1..2 } 
         else if x > 1 { -1..1 } else { 0..2 };
-        let y_offsets: std::ops::Range<isize> = if y > 1 && y < BOARD_WIDTH-1 { -1..2 } 
+        let y_offsets: std::ops::Range<isize> = if y > 0 && y < BOARD_WIDTH-1 { -1..2 } 
         else if y > 1 { -1..1 } else { 0..2 };
         
         // Go through each neighbour and count the alive ones
@@ -57,21 +64,21 @@ impl Board {
                 if (x_offset == 0 && y_offset == 0) { continue; }
                 //I use the overflowing adds so I can add a signed and unsigned integer, since I know oveflow/underflow aren't a risk
                 if (old_board.0[y.overflowing_add_signed(y_offset).0][x.overflowing_add_signed(x_offset).0] == CellState::Alive ) { alive_neighbours += 1; }
-
-                //Change the cell state according to the number of neighbours
-                match alive_neighbours {
-                    0..=1 => { self.0[y][x] = CellState::Dead; },
-                    3..=3 => { self.0[y][x] = CellState::Alive; },
-                    4..=8 => { self.0[y][x] = CellState::Dead; },
-                    _ => {}
-                }
             }
+        }
+
+        //Change the cell state according to the number of neighbours
+        match alive_neighbours {
+            0..=1 => { self.0[y][x] = CellState::Dead; },
+            3..=3 => { self.0[y][x] = CellState::Alive; },
+            4..=8 => { self.0[y][x] = CellState::Dead; },
+            _ => {}
         }
     }   
 }
 
-const BOARD_LENGTH: usize = 10;
-const BOARD_WIDTH: usize = 10;
+const BOARD_LENGTH: usize = 3;
+const BOARD_WIDTH: usize = 3;
 
 
 fn main() {
@@ -79,6 +86,79 @@ fn main() {
     loop {
         game_board.update_board();
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dead_cell_with_two_alive_neighbours_stays_dead() {
+        let mut board = Board::new();
+        board.swap_cell_state(0,0);
+        board.swap_cell_state(0,1);
+
+        board.update_board();
+        assert_eq!(CellState::Dead, board.get_cell_status(1, 1));
+    }
+
+    #[test]
+    fn dead_cell_with_three_alive_neighbours_revives() {
+        let mut board = Board::new();
+        board.swap_cell_state(0,0);
+        board.swap_cell_state(0,1);
+        board.swap_cell_state(1, 0);
+
+        board.update_board();
+        assert_eq!(CellState::Alive, board.get_cell_status(1, 1));
+    }
+
+    #[test]
+    fn alive_cell_with_two_alive_neighbours_stays_alive() {
+        let mut board = Board::new();
+        board.swap_cell_state(0,0);
+        board.swap_cell_state(0,1);
+        board.swap_cell_state(1,0);
+
+        board.update_board();
+        assert_eq!(CellState::Alive, board.get_cell_status(1, 0));
+    }
+
+    #[test]
+    fn alive_cell_with_three_alive_neighbours_stays_alive() {
+        let mut board = Board::new();
+        board.swap_cell_state(0,0);
+        board.swap_cell_state(0,1);
+        board.swap_cell_state(1,0);
+        board.swap_cell_state(1,1);
+
+        board.update_board();
+        assert_eq!(CellState::Alive, board.get_cell_status(1, 0));
+    }
+
+    #[test]
+    fn alive_cell_with_four_alive_neighbours_dies() {
+        let mut board = Board::new();
+        board.swap_cell_state(1,1);
+        board.swap_cell_state(0,1);
+        board.swap_cell_state(0,2);
+        board.swap_cell_state(1,0);
+        board.swap_cell_state(2,0);
+
+        board.update_board();
+        assert_eq!(CellState::Dead, board.get_cell_status(1, 1));
+    }
+
+    #[test]
+    fn alive_cell_with_one_alive_neighbour_dies() {
+        let mut board = Board::new();
+        board.swap_cell_state(1,1);
+        board.swap_cell_state(1,0);
+
+        board.update_board();
+        assert_eq!(CellState::Dead, board.get_cell_status(1, 1));
+    }
+    
 }
 
 
