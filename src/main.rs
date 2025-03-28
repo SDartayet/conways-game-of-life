@@ -1,4 +1,5 @@
 use std::{collections::btree_map::Range, ops::RangeInclusive};
+use macroquad::{ color, prelude, texture, window::{self, next_frame} };
 
 #[derive(Clone, PartialEq, Debug)]
 enum CellState {
@@ -80,11 +81,37 @@ impl Board {
 const BOARD_LENGTH: usize = 3;
 const BOARD_WIDTH: usize = 3;
 
+#[macroquad::main("Conway's Game of Life")]
+async fn main() {
+    let screen_width = window::screen_width() * 0.8;
+    let screen_height = window::screen_height() * 0.8;
 
-fn main() {
+    if screen_height > screen_width { let screen_width = screen_height; } else { let screen_height = screen_width ; }
+
+    let mut image = texture::Image::gen_image_color(screen_width as u16, screen_height as u16, color::WHITE);
+    let screen = texture::Texture2D::from_image(&image);
+
     let mut game_board = Board::new();
+
+    game_board.swap_cell_state(0, 0);
+    game_board.swap_cell_state(0, 1);
+    game_board.swap_cell_state(1, 0);
+    game_board.swap_cell_state(1, 1);
+
     loop {
+        window::clear_background(color::WHITE);
         game_board.update_board();
+        for y in 0..game_board.0.len() {
+            for x in 0..game_board.0[y].len() {
+                match game_board.0[y][x] {
+                    CellState::Alive => { image.set_pixel(x as u32, y as u32, color::BLACK) ;},
+                    CellState::Dead => { image.set_pixel(x as u32, y as u32, color::WHITE) ;}
+                }
+            }
+        }
+        screen.update(&image);
+        texture::draw_texture(&screen, 0., 0., color::WHITE);
+        next_frame().await
     }
 }
 
