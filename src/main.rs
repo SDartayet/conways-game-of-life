@@ -85,11 +85,11 @@ const BOARD_WIDTH: usize = 50;
 async fn main() {
 
     let board_proportions: f32 = BOARD_WIDTH as f32 / BOARD_LENGTH as f32;
-    let window_width = screen_height() * board_proportions;
+    let mut window_width = screen_height() * board_proportions;
     let window_height: f32;
     if window_width > screen_width() {
         window_height = screen_width() / board_proportions;
-        let window_width = screen_width(); 
+        window_width = screen_width(); 
     } else {
         window_height = screen_height();
     }
