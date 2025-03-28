@@ -1,4 +1,5 @@
-use std::{collections::btree_map::Range, ops::RangeInclusive};
+use std::{arch::aarch64::float32x2x2_t, collections::btree_map::Range, ops::RangeInclusive};
+use macroquad::{ prelude::*, color::* };
 
 #[derive(Clone, PartialEq, Debug)]
 enum CellState {
@@ -15,7 +16,7 @@ impl Board {
     /// Output: A game of life board
     fn new() -> Self {
         let mut row = vec![(CellState::Dead); BOARD_WIDTH];
-        let mut board = vec![row; BOARD_LENGTH];
+        let mut board = vec![row.clone(); BOARD_LENGTH];
         Board(board)
     }
 
@@ -54,7 +55,7 @@ impl Board {
 
         let x_offsets: std::ops::Range<isize> = if x > 0 && x < BOARD_WIDTH-1 { -1..2 } 
         else if x > 1 { -1..1 } else { 0..2 };
-        let y_offsets: std::ops::Range<isize> = if y > 0 && y < BOARD_WIDTH-1 { -1..2 } 
+        let y_offsets: std::ops::Range<isize> = if y > 0 && y < BOARD_LENGTH-1 { -1..2 } 
         else if y > 1 { -1..1 } else { 0..2 };
         
         // Go through each neighbour and count the alive ones
@@ -77,14 +78,57 @@ impl Board {
     }   
 }
 
-const BOARD_LENGTH: usize = 3;
-const BOARD_WIDTH: usize = 3;
+const BOARD_LENGTH: usize = 30;
+const BOARD_WIDTH: usize = 50;
 
+#[macroquad::main("Conway's Game of Life")]
+async fn main() {
 
-fn main() {
+    let board_proportions: f32 = BOARD_WIDTH as f32 / BOARD_LENGTH as f32;
+    let mut window_width = screen_height() * board_proportions;
+    let window_height: f32;
+    if window_width > screen_width() {
+        window_height = screen_width() / board_proportions;
+        window_width = screen_width(); 
+    } else {
+        window_height = screen_height();
+    }
+    let cell_size = window_width / BOARD_WIDTH as f32;
+
+    request_new_screen_size(window_width, window_height);
+    next_frame().await;
+    let mut last_update = get_time();
+
     let mut game_board = Board::new();
+
+
+    game_board.swap_cell_state(20, 20);
+    game_board.swap_cell_state(20, 21);
+    game_board.swap_cell_state(21, 20);
+    game_board.swap_cell_state(20, 19);
+    game_board.swap_cell_state(19, 20);
+    
+    draw_rectangle(0., 0., 5., 5., BLACK);
+
     loop {
-        game_board.update_board();
+        let current_time = get_time();
+
+        clear_background(LIGHTGRAY);
+        if current_time >= (last_update + 0.1) {
+            last_update = current_time;
+            game_board.update_board();
+        }
+        for y in 0..game_board.0.len() {
+            for x in 0..game_board.0[y].len() {
+                let x_screen_pos = (x as f32) * cell_size;
+                let y_screen_pos = (y as f32) * cell_size;
+                match game_board.0[y][x] {
+                    CellState::Alive => { draw_rectangle(x_screen_pos, y_screen_pos, cell_size, cell_size, BLACK); },
+                    CellState::Dead => { draw_rectangle(x_screen_pos, y_screen_pos, cell_size, cell_size, WHITE); }
+                }
+            }
+        }
+        next_frame().await;
     }
 }
 
