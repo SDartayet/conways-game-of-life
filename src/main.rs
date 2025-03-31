@@ -1,5 +1,5 @@
 use std::{arch::aarch64::float32x2x2_t, collections::btree_map::Range, ops::RangeInclusive};
-use macroquad::{ prelude::*, color::* };
+use macroquad::{ color::*, miniquad::window, prelude::* };
 
 #[derive(Clone, PartialEq, Debug)]
 enum CellState {
@@ -86,7 +86,7 @@ async fn main() {
 
     let board_proportions: f32 = BOARD_WIDTH as f32 / BOARD_LENGTH as f32;
     let mut window_width = screen_height() * board_proportions;
-    let window_height: f32;
+    let mut window_height: f32;
     if window_width > screen_width() {
         window_height = screen_width() / board_proportions;
         window_width = screen_width(); 
@@ -102,6 +102,7 @@ async fn main() {
 
     let mut game_board = Board::new();
 
+    let mut is_game_paused = false;
 
     game_board.swap_cell_state(20, 20);
     game_board.swap_cell_state(20, 21);
@@ -114,16 +115,9 @@ async fn main() {
     loop {
         let current_time = get_time();
 
-        let mut window_width = screen_height() * board_proportions;
-        let window_height: f32;
-        if window_width > screen_width() {
-            window_height = screen_width() / board_proportions;
-            window_width = screen_width(); 
-        } else {
-            window_height = screen_height();
-        }
         let cell_size = window_width / BOARD_WIDTH as f32;
-        if current_time >= (last_update + 0.1) {
+        
+        if current_time >= (last_update + 0.1) && !is_game_paused {
             last_update = current_time;
             game_board.update_board();
         }
@@ -137,6 +131,8 @@ async fn main() {
                 }
             }
         }
+
+        if is_key_pressed(KeyCode::Space) { is_game_paused = !is_game_paused; }
         next_frame().await;
     }
 }
