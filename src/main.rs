@@ -78,26 +78,23 @@ impl Board {
     }   
 }
 
+fn is_input_numeric() -> bool {
+    is_key_pressed(KeyCode::Key0) || is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Key2) ||
+    is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Key5) ||
+    is_key_pressed(KeyCode::Key6) || is_key_pressed(KeyCode::Key7) || is_key_pressed(KeyCode::Key8) || is_key_pressed(KeyCode::Key9)
+}
+
 const DEFAULT_BOARD_LENGTH: usize = 30;
 const DEFAULT_BOARD_WIDTH: usize = 50;
 
 #[macroquad::main("Conway's Game of Life")]
 async fn main() {
-
-    let board_proportions: f32 = DEFAULT_BOARD_WIDTH as f32 / DEFAULT_BOARD_LENGTH as f32;
-    let mut window_width = screen_height() * board_proportions;
-    let mut window_height: f32;
-    if window_width > screen_width() {
-        window_height = screen_width() / board_proportions;
-        window_width = screen_width(); 
-    } else {
-        window_height = screen_height();
-    }
-    let cell_size = window_width / DEFAULT_BOARD_WIDTH as f32;
-    clear_background(WHITE);
+    let mut window_width: f32 = screen_width();
+    let mut window_height: f32 = window_width * 3. / 5.;
 
     request_new_screen_size(window_width, window_height);
     next_frame();
+
     let mut last_update = get_time();
 
     let mut game_board = Board::new();
@@ -108,30 +105,70 @@ async fn main() {
     let speeds = [("Speed: 0.25x", 2.), ("Speed: 0.5x", 1.), ("Speed: 1x", 0.5), ("Speed: 2x", 0.25), ("Speed: 4x", 0.125)];
     let mut current_speed_index = 2;
 
-    
+    let mut board_width:usize = 0;
+    let mut board_height:usize = 0;
 
-    game_board.swap_cell_state(20, 20);
-    game_board.swap_cell_state(20, 21);
-    game_board.swap_cell_state(21, 20);
-    game_board.swap_cell_state(20, 19);
-    game_board.swap_cell_state(19, 20);
-    
+    let mut current_size_input: usize = 0;
+    let mut currently_selected_width = true;
 
     while (!is_key_pressed(KeyCode::Enter)) {
         clear_background(LIGHTGRAY);
-        //draw_rectangle(0., window_height / 4., window_width, window_height / 2., YELLOW);
-        draw_text("GAME OF LIFE", window_width / 3.5, window_height / 10., 60., BLACK);
-        draw_text("Rules:", window_width / 40., 2.* window_height / 10., 30., BLACK);
-        draw_text("- Any alive cell with less than two neighbours dies by underpopulation", window_width / 40., 3.* window_height / 10., 24., BLACK);
-        draw_text("- Any alive cell with more than three neighbours dies by overpopulation", window_width / 40., 4.* window_height / 10., 24., BLACK);
-        draw_text("- Any dead cell with three neighbours becomes alive by reproduction", window_width / 40., 5.* window_height / 10., 24., BLACK);
-        draw_text("Press space to pause. While paused, click on a cell to change its state", window_width / 27., 6.* window_height / 10., 24., BLACK);
-        draw_text("While playing, press left or right to increase or decrease cell state update speed", window_width / 27., 7.* window_height / 10., 20., BLACK);
-        draw_text("Press enter to start", window_width / 3.5, 8.5 * window_height / 10., 40., BLACK);
 
+        let text_lines = 11.;
+
+
+        draw_text("GAME OF LIFE", window_width / 3.5, window_height / text_lines, 60., BLACK);
+        draw_text("Rules:", window_width / 40., 2.* window_height / text_lines, 30., BLACK);
+        draw_text("- Any alive cell with less than two neighbours dies by underpopulation", window_width / 40., 3.* window_height / text_lines, 24., BLACK);
+        draw_text("- Any alive cell with more than three neighbours dies by overpopulation", window_width / 40., 4.* window_height / text_lines, 24., BLACK);
+        draw_text("- Any dead cell with three neighbours becomes alive by reproduction", window_width / 40., 5.* window_height / text_lines, 24., BLACK);
+        draw_text("Press space to pause. While paused, click on a cell to change its state", window_width / 27., 6.* window_height / text_lines, 24., BLACK);
+        draw_text("While playing, press left or right to increase or decrease cell state update speed", window_width / 27., 7.* window_height / text_lines, 20., BLACK);
+        draw_text("Press enter to start", window_width / 3.5, 9.5 * window_height / text_lines, 40., BLACK);
+
+        if is_input_numeric() {
+            current_size_input *= 10;
+            let key = get_last_key_pressed().unwrap();
+            match key {
+                KeyCode::Key1 =>  current_size_input = current_size_input.saturating_add(1),
+                KeyCode::Key2 =>  current_size_input = current_size_input.saturating_add(2),
+                KeyCode::Key3 =>  current_size_input = current_size_input.saturating_add(3),
+                KeyCode::Key4 =>  current_size_input = current_size_input.saturating_add(4),
+                KeyCode::Key5 =>  current_size_input = current_size_input.saturating_add(5),
+                KeyCode::Key6 =>  current_size_input = current_size_input.saturating_add(6),
+                KeyCode::Key7 =>  current_size_input = current_size_input.saturating_add(7),
+                KeyCode::Key8 =>  current_size_input = current_size_input.saturating_add(8),
+                KeyCode::Key9 =>  current_size_input = current_size_input.saturating_add(9),
+                _ => {}
+            }
+        }
+        if is_key_pressed(KeyCode::Minus) { current_size_input /= 10; }
+        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::Right) { 
+            currently_selected_width = !currently_selected_width; 
+            if currently_selected_width { current_size_input = board_width; } else { current_size_input = board_height; }
+        }
+        if currently_selected_width { 
+            board_width = current_size_input;
+            draw_rectangle(2. * window_width / 6., 7.7 * window_height / text_lines, ((f64::log10((board_width + 1) as f64).floor() + 1.) * 11.) as f32, 15., YELLOW);
+        } else { 
+            board_height = current_size_input; 
+            draw_rectangle(4. * window_width / 6., 7.7 * window_height / text_lines, ((f64::log10((board_height + 1) as f64).floor() + 1.) * 11.) as f32, 15., YELLOW);
+
+        }
+
+        draw_text("Input board size: ", window_width / 30., 8.* window_height / text_lines, 24., BLACK);
+        draw_text(&board_width.to_string(), 2. * window_width / 6., 8.* window_height / text_lines, 24., BLACK);
+        draw_text(" by ", 3. * window_width / 6., 8.* window_height / text_lines, 24., BLACK);
+        draw_text(&board_height.to_string(), 4. *window_width / 6., 8.* window_height / text_lines, 24., BLACK);
 
         next_frame().await;
     }
+    
+    let board_proportions: f32 = board_width as f32 / board_height as f32;
+    if board_proportions > 0. { window_height /= board_proportions; } else { window_width *= board_proportions; }
+    request_new_screen_size(window_width, window_height);
+    next_frame();
+    
 
     loop {
 
