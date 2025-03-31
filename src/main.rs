@@ -314,7 +314,7 @@ async fn main() {
     }
     let cell_size = window_width / (board_width as f32);
     //Since the OS bar on top of the window is counted for the height, I need to add a bit to it
-    window_height += 0.8 * cell_size;
+    window_height += 0.08 * screen_height();;
     request_new_screen_size(window_width, window_height);
     next_frame();
 
