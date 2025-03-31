@@ -94,6 +94,7 @@ async fn main() {
         window_height = screen_height();
     }
     let cell_size = window_width / BOARD_WIDTH as f32;
+    clear_background(WHITE);
 
     request_new_screen_size(window_width, window_height);
     next_frame().await;
@@ -113,7 +114,15 @@ async fn main() {
     loop {
         let current_time = get_time();
 
-        clear_background(LIGHTGRAY);
+        let mut window_width = screen_height() * board_proportions;
+        let window_height: f32;
+        if window_width > screen_width() {
+            window_height = screen_width() / board_proportions;
+            window_width = screen_width(); 
+        } else {
+            window_height = screen_height();
+        }
+        let cell_size = window_width / BOARD_WIDTH as f32;
         if current_time >= (last_update + 0.1) {
             last_update = current_time;
             game_board.update_board();
