@@ -1,4 +1,4 @@
-use std::{arch::aarch64::float32x2x2_t, collections::btree_map::Range, ops::RangeInclusive};
+use std::{collections::btree_map::Range, ops::RangeInclusive};
 use macroquad::{ color::*, miniquad::window, prelude::* };
 
 #[derive(Clone, PartialEq, Debug)]
@@ -15,8 +15,8 @@ impl Board {
     /// Creates a new board from scratch. All the cells start dead by default.
     /// Output: A game of life board
     fn new() -> Self {
-        let mut row = vec![(CellState::Dead); BOARD_WIDTH];
-        let mut board = vec![row.clone(); BOARD_LENGTH];
+        let mut row = vec![(CellState::Dead); DEFAULT_BOARD_WIDTH];
+        let mut board = vec![row.clone(); DEFAULT_BOARD_LENGTH];
         Board(board)
     }
 
@@ -53,9 +53,9 @@ impl Board {
 
         // Creates offset ranges for the neighbours, based on which offsets would be valid for the current position, so as to prevent overflow or underflow of indexes
 
-        let x_offsets: std::ops::Range<isize> = if x > 0 && x < BOARD_WIDTH-1 { -1..2 } 
+        let x_offsets: std::ops::Range<isize> = if x > 0 && x < DEFAULT_BOARD_WIDTH-1 { -1..2 } 
         else if x > 1 { -1..1 } else { 0..2 };
-        let y_offsets: std::ops::Range<isize> = if y > 0 && y < BOARD_LENGTH-1 { -1..2 } 
+        let y_offsets: std::ops::Range<isize> = if y > 0 && y < DEFAULT_BOARD_LENGTH-1 { -1..2 } 
         else if y > 1 { -1..1 } else { 0..2 };
         
         // Go through each neighbour and count the alive ones
@@ -78,13 +78,13 @@ impl Board {
     }   
 }
 
-const BOARD_LENGTH: usize = 30;
-const BOARD_WIDTH: usize = 50;
+const DEFAULT_BOARD_LENGTH: usize = 30;
+const DEFAULT_BOARD_WIDTH: usize = 50;
 
 #[macroquad::main("Conway's Game of Life")]
 async fn main() {
 
-    let board_proportions: f32 = BOARD_WIDTH as f32 / BOARD_LENGTH as f32;
+    let board_proportions: f32 = DEFAULT_BOARD_WIDTH as f32 / DEFAULT_BOARD_LENGTH as f32;
     let mut window_width = screen_height() * board_proportions;
     let mut window_height: f32;
     if window_width > screen_width() {
@@ -93,16 +93,20 @@ async fn main() {
     } else {
         window_height = screen_height();
     }
-    let cell_size = window_width / BOARD_WIDTH as f32;
+    let cell_size = window_width / DEFAULT_BOARD_WIDTH as f32;
     clear_background(WHITE);
 
     request_new_screen_size(window_width, window_height);
-    next_frame().await;
+    next_frame();
     let mut last_update = get_time();
 
     let mut game_board = Board::new();
 
-    let mut is_game_paused = false;
+    let mut is_game_paused = true;
+
+    let speeds = 
+
+    
 
     game_board.swap_cell_state(20, 20);
     game_board.swap_cell_state(20, 21);
@@ -110,14 +114,28 @@ async fn main() {
     game_board.swap_cell_state(20, 19);
     game_board.swap_cell_state(19, 20);
     
-    draw_rectangle(0., 0., 5., 5., BLACK);
+
+    while (!is_key_pressed(KeyCode::Enter)) {
+        clear_background(LIGHTGRAY);
+        //draw_rectangle(0., window_height / 4., window_width, window_height / 2., YELLOW);
+        draw_text("GAME OF LIFE", window_width / 3.5, window_height / 9., 60., BLACK);
+        draw_text("Rules:", window_width / 40., 2.* window_height / 9., 30., BLACK);
+        draw_text("- Any alive cell with less than two neighbours dies by underpopulation", window_width / 40., 3.* window_height / 9., 24., BLACK);
+        draw_text("- Any alive cell with more than three neighbours dies by overpopulation", window_width / 40., 4.* window_height / 9., 24., BLACK);
+        draw_text("- Any dead cell with three neighbours becomes alive by reproduction", window_width / 40., 5.* window_height / 9., 24., BLACK);
+        draw_text("Press space to pause. While paused, click on a cell to change its state", window_width / 27., 6.* window_height / 9., 24., BLACK);
+        draw_text("Press enter to start", window_width / 3.5, 7.* window_height / 9., 40., BLACK);
+
+
+        next_frame().await;
+    }
 
     loop {
         let current_time = get_time();
 
-        let cell_size = window_width / BOARD_WIDTH as f32;
+        let cell_size = window_width / DEFAULT_BOARD_WIDTH as f32;
         
-        if current_time >= (last_update + 0.1) && !is_game_paused {
+        if current_time >= (last_update + 0.5) && !is_game_paused {
             last_update = current_time;
             game_board.update_board();
         } else if is_mouse_button_pressed(MouseButton::Left) {
