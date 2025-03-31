@@ -1,5 +1,4 @@
 use macroquad::{color::*, prelude::*};
-use std::{collections::btree_map::Range, ops::RangeInclusive};
 
 #[derive(Clone, PartialEq, Debug)]
 enum CellState {
@@ -14,8 +13,8 @@ impl Board {
     /// Creates a new board from scratch. All the cells start dead by default.
     /// Output: A game of life board
     fn new(width: usize, length: usize) -> Self {
-        let mut row = vec![(CellState::Dead); width];
-        let mut board = vec![row.clone(); length];
+        let row = vec![(CellState::Dead); width];
+        let board = vec![row.clone(); length];
         Board(board)
     }
 
@@ -73,13 +72,13 @@ impl Board {
         let mut alive_neighbours: u8 = 0;
         for x_offset in x_offsets {
             for y_offset in y_offsets.clone() {
-                if (x_offset == 0 && y_offset == 0) {
+                if x_offset == 0 && y_offset == 0 {
                     continue;
                 }
                 //I use the overflowing adds so I can add a signed and unsigned integer, since I know oveflow/underflow aren't a risk
-                if (old_board.0[y.overflowing_add_signed(y_offset).0]
+                if old_board.0[y.overflowing_add_signed(y_offset).0]
                     [x.overflowing_add_signed(x_offset).0]
-                    == CellState::Alive)
+                    == CellState::Alive
                 {
                     alive_neighbours += 1;
                 }
@@ -116,7 +115,7 @@ fn is_input_numeric() -> bool {
 }
 
 const DEFAULT_BOARD_LENGTH: usize = 30;
-const DEFAULT_BOARD_WIDTH: usize = 50;
+const DEFAULT_BOARD_WIDTH: usize = 30;
 
 #[macroquad::main("Conway's Game of Life")]
 async fn main() {
@@ -154,10 +153,10 @@ async fn main() {
     //Used to konw whether width or height is selected in initial menu
     let mut currently_selected_width = true;
 
-    while (!is_key_pressed(KeyCode::Enter)) {
+    while !is_key_pressed(KeyCode::Enter) {
         clear_background(LIGHTGRAY);
 
-        let text_lines = 11.;
+        let text_lines = 12.;
 
         draw_text(
             "GAME OF LIFE",
@@ -211,7 +210,7 @@ async fn main() {
         draw_text(
             "Press enter to start",
             window_width / 3.5,
-            9.5 * window_height / text_lines,
+            10.5 * window_height / text_lines,
             40.,
             BLACK,
         );
@@ -295,6 +294,13 @@ async fn main() {
             24.,
             BLACK,
         );
+        draw_text(
+            "(use left and right to swap between width and height)",
+            window_width / 5.,
+            9. * window_height / text_lines,
+            20.,
+            BLACK,
+        );
 
         next_frame().await;
     }
@@ -338,7 +344,7 @@ async fn main() {
             for x in 0..game_board.0[y].len() {
                 let x_screen_pos = (x as f32) * cell_size;
                 let y_screen_pos = (y as f32) * cell_size;
-                match game_board.0[y][x] {
+                match game_board.get_cell_status(x, y) {
                     CellState::Alive => {
                         draw_rectangle(x_screen_pos, y_screen_pos, cell_size, cell_size, BLACK);
                     }
