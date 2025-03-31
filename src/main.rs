@@ -1,4 +1,4 @@
-use macroquad::{color::*, miniquad::window, prelude::*};
+use macroquad::{color::*, prelude::*};
 use std::{collections::btree_map::Range, ops::RangeInclusive};
 
 #[derive(Clone, PartialEq, Debug)]
@@ -299,7 +299,6 @@ async fn main() {
 
         next_frame().await;
     }
-
     //I calculate the proportions of the board, to resize the window accordingly
     let board_proportions: f32 = board_width as f32 / board_height as f32;
 
@@ -322,7 +321,7 @@ async fn main() {
 
     loop {
         let current_time = get_time();
-
+      
         //If game is playing, I update the board in appropriate intervals. 
         //If not, I can swap the states of the cells by clicking on them
         if current_time >= (last_update + speeds[current_speed_index].1) && !is_game_paused {
