@@ -120,7 +120,14 @@ async fn main() {
         if current_time >= (last_update + 0.1) && !is_game_paused {
             last_update = current_time;
             game_board.update_board();
+        } else if is_mouse_button_pressed(MouseButton::Left) {
+            let (mouse_position_x, mouse_position_y) = mouse_position();
+            let cell_coordinate_x = (mouse_position_x / cell_size).floor() as usize;
+            let cell_coordinate_y = (mouse_position_y / cell_size).floor() as usize;
+            game_board.swap_cell_state(cell_coordinate_x, cell_coordinate_y);
+
         }
+
         for y in 0..game_board.0.len() {
             for x in 0..game_board.0[y].len() {
                 let x_screen_pos = (x as f32) * cell_size;
