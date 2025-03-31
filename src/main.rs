@@ -120,7 +120,6 @@ const DEFAULT_BOARD_WIDTH: usize = 50;
 
 #[macroquad::main("Conway's Game of Life")]
 async fn main() {
-
     // I set initial window width and height appropriately for the menu
     let mut window_width: f32 = screen_width();
     let mut window_height: f32 = window_width * 3. / 5.;
@@ -313,7 +312,7 @@ async fn main() {
     }
     let cell_size = window_width / (board_width as f32);
     //Since the OS bar on top of the window is counted for the height, I need to add a bit to it
-    window_height += 0.08 * screen_height();;
+    window_height += 0.08 * screen_height();
     request_new_screen_size(window_width, window_height);
     next_frame();
 
@@ -321,8 +320,8 @@ async fn main() {
 
     loop {
         let current_time = get_time();
-      
-        //If game is playing, I update the board in appropriate intervals. 
+
+        //If game is playing, I update the board in appropriate intervals.
         //If not, I can swap the states of the cells by clicking on them
         if current_time >= (last_update + speeds[current_speed_index].1) && !is_game_paused {
             last_update = current_time;
