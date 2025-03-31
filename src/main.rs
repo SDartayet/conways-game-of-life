@@ -14,9 +14,9 @@ impl Board {
 
     /// Creates a new board from scratch. All the cells start dead by default.
     /// Output: A game of life board
-    fn new() -> Self {
-        let mut row = vec![(CellState::Dead); DEFAULT_BOARD_WIDTH];
-        let mut board = vec![row.clone(); DEFAULT_BOARD_LENGTH];
+    fn new(width: usize, length: usize) -> Self {
+        let mut row = vec![(CellState::Dead); width];
+        let mut board = vec![row.clone(); length];
         Board(board)
     }
 
@@ -53,9 +53,9 @@ impl Board {
 
         // Creates offset ranges for the neighbours, based on which offsets would be valid for the current position, so as to prevent overflow or underflow of indexes
 
-        let x_offsets: std::ops::Range<isize> = if x > 0 && x < DEFAULT_BOARD_WIDTH-1 { -1..2 } 
+        let x_offsets: std::ops::Range<isize> = if x > 0 && x < self.0[0].len()-1 { -1..2 } 
         else if x > 1 { -1..1 } else { 0..2 };
-        let y_offsets: std::ops::Range<isize> = if y > 0 && y < DEFAULT_BOARD_LENGTH-1 { -1..2 } 
+        let y_offsets: std::ops::Range<isize> = if y > 0 && y < self.0.len()-1 { -1..2 } 
         else if y > 1 { -1..1 } else { 0..2 };
         
         // Go through each neighbour and count the alive ones
@@ -96,8 +96,6 @@ async fn main() {
     next_frame();
 
     let mut last_update = get_time();
-
-    let mut game_board = Board::new();
 
     let mut is_game_paused = true;
 
@@ -169,6 +167,7 @@ async fn main() {
     request_new_screen_size(window_width, window_height);
     next_frame();
     
+    let mut game_board = Board::new(board_width, board_height);
 
     loop {
 
@@ -176,7 +175,7 @@ async fn main() {
 
         let current_time = get_time();
 
-        let cell_size = window_width / DEFAULT_BOARD_WIDTH as f32;
+        let cell_size = window_width / board_width as f32;
         
         if current_time >= (last_update + speeds[current_speed_index].1) && !is_game_paused {
             last_update = current_time;
@@ -230,7 +229,7 @@ mod tests {
 
     #[test]
     fn dead_cell_with_two_alive_neighbours_stays_dead() {
-        let mut board = Board::new();
+        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
         board.swap_cell_state(0,0);
         board.swap_cell_state(0,1);
 
@@ -240,7 +239,7 @@ mod tests {
 
     #[test]
     fn dead_cell_with_three_alive_neighbours_revives() {
-        let mut board = Board::new();
+        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
         board.swap_cell_state(0,0);
         board.swap_cell_state(0,1);
         board.swap_cell_state(1, 0);
@@ -251,7 +250,7 @@ mod tests {
 
     #[test]
     fn alive_cell_with_two_alive_neighbours_stays_alive() {
-        let mut board = Board::new();
+        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
         board.swap_cell_state(0,0);
         board.swap_cell_state(0,1);
         board.swap_cell_state(1,0);
@@ -262,7 +261,7 @@ mod tests {
 
     #[test]
     fn alive_cell_with_three_alive_neighbours_stays_alive() {
-        let mut board = Board::new();
+        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
         board.swap_cell_state(0,0);
         board.swap_cell_state(0,1);
         board.swap_cell_state(1,0);
@@ -274,7 +273,7 @@ mod tests {
 
     #[test]
     fn alive_cell_with_four_alive_neighbours_dies() {
-        let mut board = Board::new();
+        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
         board.swap_cell_state(1,1);
         board.swap_cell_state(0,1);
         board.swap_cell_state(0,2);
@@ -287,7 +286,7 @@ mod tests {
 
     #[test]
     fn alive_cell_with_one_alive_neighbour_dies() {
-        let mut board = Board::new();
+        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
         board.swap_cell_state(1,1);
         board.swap_cell_state(1,0);
 
