@@ -104,7 +104,9 @@ async fn main() {
 
     let mut is_game_paused = true;
 
-    let speeds = 
+    let mut last_text_update = get_time() - 1.;
+    let speeds = [("Speed: 0.25x", 2.), ("Speed: 0.5x", 1.), ("Speed: 1x", 0.5), ("Speed: 2x", 0.25), ("Speed: 4x", 0.125)];
+    let mut current_speed_index = 2;
 
     
 
@@ -118,24 +120,28 @@ async fn main() {
     while (!is_key_pressed(KeyCode::Enter)) {
         clear_background(LIGHTGRAY);
         //draw_rectangle(0., window_height / 4., window_width, window_height / 2., YELLOW);
-        draw_text("GAME OF LIFE", window_width / 3.5, window_height / 9., 60., BLACK);
-        draw_text("Rules:", window_width / 40., 2.* window_height / 9., 30., BLACK);
-        draw_text("- Any alive cell with less than two neighbours dies by underpopulation", window_width / 40., 3.* window_height / 9., 24., BLACK);
-        draw_text("- Any alive cell with more than three neighbours dies by overpopulation", window_width / 40., 4.* window_height / 9., 24., BLACK);
-        draw_text("- Any dead cell with three neighbours becomes alive by reproduction", window_width / 40., 5.* window_height / 9., 24., BLACK);
-        draw_text("Press space to pause. While paused, click on a cell to change its state", window_width / 27., 6.* window_height / 9., 24., BLACK);
-        draw_text("Press enter to start", window_width / 3.5, 7.* window_height / 9., 40., BLACK);
+        draw_text("GAME OF LIFE", window_width / 3.5, window_height / 10., 60., BLACK);
+        draw_text("Rules:", window_width / 40., 2.* window_height / 10., 30., BLACK);
+        draw_text("- Any alive cell with less than two neighbours dies by underpopulation", window_width / 40., 3.* window_height / 10., 24., BLACK);
+        draw_text("- Any alive cell with more than three neighbours dies by overpopulation", window_width / 40., 4.* window_height / 10., 24., BLACK);
+        draw_text("- Any dead cell with three neighbours becomes alive by reproduction", window_width / 40., 5.* window_height / 10., 24., BLACK);
+        draw_text("Press space to pause. While paused, click on a cell to change its state", window_width / 27., 6.* window_height / 10., 24., BLACK);
+        draw_text("While playing, press left or right to increase or decrease cell state update speed", window_width / 27., 7.* window_height / 10., 20., BLACK);
+        draw_text("Press enter to start", window_width / 3.5, 8.5 * window_height / 10., 40., BLACK);
 
 
         next_frame().await;
     }
 
     loop {
+
+        
+
         let current_time = get_time();
 
         let cell_size = window_width / DEFAULT_BOARD_WIDTH as f32;
         
-        if current_time >= (last_update + 0.5) && !is_game_paused {
+        if current_time >= (last_update + speeds[current_speed_index].1) && !is_game_paused {
             last_update = current_time;
             game_board.update_board();
         } else if is_mouse_button_pressed(MouseButton::Left) {
@@ -157,7 +163,26 @@ async fn main() {
             }
         }
 
-        if is_key_pressed(KeyCode::Space) { is_game_paused = !is_game_paused; }
+        if is_key_pressed(KeyCode::Space) { 
+            is_game_paused = !is_game_paused;
+        }
+
+        if is_game_paused {
+            draw_text( "Paused", window_width / 80., window_height / 15., 42., BLACK);
+        } else {
+            if is_key_pressed(KeyCode::Left) {
+                if current_speed_index < 4 { current_speed_index += 1; }
+                last_text_update = get_time();
+            }
+    
+            if is_key_pressed(KeyCode::Right) {
+                if current_speed_index > 0 { current_speed_index -= 1; }
+                last_text_update = get_time();
+            }
+        }
+        if get_time() < last_text_update + 0.75 {
+            draw_text( speeds[current_speed_index].0, window_width / 80., window_height / 15., 42., BLACK);
+        }
         next_frame().await;
     }
 }
