@@ -163,7 +163,15 @@ async fn main() {
     }
     
     let board_proportions: f32 = board_width as f32 / board_height as f32;
-    if board_proportions > 0. { window_height /= board_proportions; } else { window_width *= board_proportions; }
+    if board_proportions >= 1. { 
+        window_width = screen_width() * 4. / 5.;
+        window_height = window_width / board_proportions;
+    } else { 
+        window_height = screen_height();
+        window_width = window_height * board_proportions;
+    }
+    let cell_size = window_width / (board_width as f32);
+    window_height += 0.8 * cell_size;
     request_new_screen_size(window_width, window_height);
     next_frame();
     
@@ -173,10 +181,7 @@ async fn main() {
 
         
 
-        let current_time = get_time();
-
-        let cell_size = window_width / board_width as f32;
-        
+        let current_time = get_time();        
         if current_time >= (last_update + speeds[current_speed_index].1) && !is_game_paused {
             last_update = current_time;
             game_board.update_board();
