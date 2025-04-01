@@ -307,17 +307,13 @@ async fn main() {
         next_frame().await;
     }
     //I calculate the proportions of the board, to resize the window accordingly
-    let board_proportions: f32 = board_width as f32 / board_height as f32;
+    let board_proportions = board_width / board_height;
 
-    //If the board is wider than it is larger, I adapt the height. Else, I adapt the width accordingly
-    //I do this since most screens are wider than they are long
-    if board_proportions >= 1. {
-        window_width = screen_width();
-        window_height = window_width / board_proportions;
-    } else {
-        window_height = screen_height();
-        window_width = window_height * board_proportions;
-    }
+    //I adapt the screen size to the board proportions, according to whether the screen is longer than it's tall, or viceversa
+    //I need to multiply or divide by the proportions so cells are always square shaped
+    if screen_height() < screen_width() {
+        window_width = screen_height() * board_proportions as f32;
+    } else { window_height = screen_width() / board_proportions as f32; }
     let cell_size = window_width / (board_width as f32);
     //Since the OS bar on top of the window is counted for the height, I need to add a bit to it
     //window_height += 0.08 * screen_height();
