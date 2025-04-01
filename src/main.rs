@@ -7,13 +7,13 @@ enum CellState {
 }
 
 #[derive(Clone)]
-struct Board(Vec<Vec<(CellState)>>);
+struct Board(Vec<Vec<CellState>>);
 
 impl Board {
     /// Creates a new board from scratch. All the cells start dead by default.
     /// Output: A game of life board
     fn new(width: usize, length: usize) -> Self {
-        let row = vec![(CellState::Dead); width];
+        let row = vec![CellState::Dead; width];
         let board = vec![row.clone(); length];
         Board(board)
     }
