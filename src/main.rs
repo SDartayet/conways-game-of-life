@@ -313,7 +313,9 @@ async fn main() {
     //I need to multiply or divide by the proportions so cells are always square shaped
     if screen_height() < screen_width() {
         window_width = screen_height() * board_proportions as f32;
-    } else { window_height = screen_width() / board_proportions as f32; }
+    } else {
+        window_height = screen_width() / board_proportions as f32;
+    }
     let cell_size = window_width / (board_width as f32);
     //Since the OS bar on top of the window is counted for the height, I need to add a bit to it
     //window_height += 0.08 * screen_height();
