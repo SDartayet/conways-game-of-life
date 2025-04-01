@@ -1,83 +1,69 @@
+use std::ops::{Index, IndexMut, Range, RangeInclusive};
+
 use macroquad::{color::*, prelude::*};
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 enum CellState {
     Alive,
     Dead,
 }
 
 #[derive(Clone)]
-struct Board(Vec<Vec<CellState>>);
+struct Board {
+    board: Vec<CellState>,
+    old_board: Vec<CellState>,
+    width: usize,
+    length: usize
+}
 
 impl Board {
     /// Creates a new board from scratch. All the cells start dead by default.
     /// Output: A game of life board
     fn new(width: usize, length: usize) -> Self {
-        let row = vec![CellState::Dead; width];
-        let board = vec![row.clone(); length];
-        Board(board)
-    }
-
-    /// Returns the status of a cell, given its coordinates
-    /// Input: x and y coordinates of the cell
-    /// Output: whether the cell is dead or alive
-    fn get_cell_status(&self, x: usize, y: usize) -> CellState {
-        self.0[y][x].clone()
+        let board = vec![CellState::Dead; width * length];
+        let old_board = board.clone();
+        Board{ board, old_board, width, length }
     }
 
     /// Swaps a specific position in an already existing board.
     /// Input: a mutable reference to the board, and the row and column of the cell to update
     /// NOT the cell udpate function, this one is intended to be used for the user to manually flip the states of cells before the game starts
-    fn swap_cell_state(&mut self, x: usize, y: usize) {
-        if self.0[y][x] == CellState::Alive {
-            self.0[y][x] = CellState::Dead;
-        } else {
-            self.0[y][x] = CellState::Alive;
+    fn toggle_cell_state(&mut self, x: usize, y: usize) {
+        match self[(x,y)] {
+            CellState::Alive => self[(x,y)] = CellState::Dead,
+            CellState::Dead => self[(x,y)] = CellState::Alive
         }
     }
 
     /// Updates the states of every cell in the board
     fn update_board(&mut self) {
-        //We need to store the old state so the updates on the cells don't cause confusion
-        //For this, I clone the current board
-
-        let board_old = &self.clone();
-
-        for y in 0..self.0.len() {
-            for x in 0..self.0[0].len() {
-                self.update_cell_state(board_old, x, y);
+        self.old_board = self.board.clone();
+        for x in 0..self.width {
+            for y in 0..self.length {
+                self.update_cell_state(x, y);
             }
         }
     }
 
-    fn update_cell_state(&mut self, old_board: &Board, x: usize, y: usize) {
+    fn update_cell_state(&mut self, x: usize, y: usize) {
         // Creates offset ranges for the neighbours, based on which offsets would be valid for the current position, so as to prevent overflow or underflow of indexes
-
-        let x_offsets: std::ops::Range<isize> = if x > 0 && x < self.0[0].len() - 1 {
-            -1..2
-        } else if x > 1 {
-            -1..1
-        } else {
-            0..2
-        };
-        let y_offsets: std::ops::Range<isize> = if y > 0 && y < self.0.len() - 1 {
-            -1..2
-        } else if y > 1 {
-            -1..1
-        } else {
-            0..2
-        };
+        let x_neighbours = RangeInclusive::new (
+            x.checked_sub(1).unwrap_or(0),  
+            (self.width - 1).min(x + 1), 
+        );
+        let y_neighbours = RangeInclusive::new (
+            y.checked_sub(1).unwrap_or(0),  
+            (self.length - 1).min(y + 1), 
+        );
 
         // Go through each neighbour and count the alive ones
         let mut alive_neighbours: u8 = 0;
-        for x_offset in x_offsets {
-            for y_offset in y_offsets.clone() {
-                if x_offset == 0 && y_offset == 0 {
+        for x_neighbour in x_neighbours {
+            for y_neighbour in y_neighbours.clone() {
+                if (x_neighbour, y_neighbour) == (x,y) {
                     continue;
                 }
-                //I use the overflowing adds so I can add a signed and unsigned integer, since I know oveflow/underflow aren't a risk
-                if old_board.0[y.overflowing_add_signed(y_offset).0]
-                    [x.overflowing_add_signed(x_offset).0]
+                if self.old_board[x_neighbour * self.width + y_neighbour]
                     == CellState::Alive
                 {
                     alive_neighbours += 1;
@@ -88,16 +74,36 @@ impl Board {
         //Change the cell state according to the number of neighbours
         match alive_neighbours {
             0..=1 => {
-                self.0[y][x] = CellState::Dead;
+                self[(x,y)] = CellState::Dead;
             }
-            3..=3 => {
-                self.0[y][x] = CellState::Alive;
+            3 => {
+                self[(x,y)] = CellState::Alive;
             }
-            4..=8 => {
-                self.0[y][x] = CellState::Dead;
-            }
+            4.. => {
+                self[(x,y)] = CellState::Dead;
+            },
             _ => {}
         }
+    }
+}
+
+impl Index<(usize, usize)> for Board {
+    type Output = CellState;
+
+    /// Returns the status of a cell, given its coordinates
+    /// Input: x and y coordinates of the cell
+    /// Output: whether the cell is dead or alive
+    fn index(&self, (x, y): (usize, usize)) -> &CellState {
+        &self.board[x * self.width + y]
+    }
+}
+
+impl IndexMut<(usize, usize)> for Board {
+    /// Returns a mutable reference to the status of a cell, given its coordinates
+    /// Input: x and y coordinates of the cell
+    /// Output: a mutable reference to the cell state
+    fn index_mut(&mut self, (x, y): (usize, usize)) -> &mut CellState {
+        &mut self.board[x * self.width + y]
     }
 }
 
@@ -114,8 +120,8 @@ fn is_input_numeric() -> bool {
         || is_key_pressed(KeyCode::Key9)
 }
 
-const DEFAULT_BOARD_LENGTH: usize = 30;
-const DEFAULT_BOARD_WIDTH: usize = 30;
+const DEFAULT_BOARD_LENGTH: usize = 5;
+const DEFAULT_BOARD_WIDTH: usize = 5;
 
 #[macroquad::main("Conway's Game of Life")]
 async fn main() {
@@ -144,8 +150,8 @@ async fn main() {
     ];
     let mut current_speed_index = 2;
 
-    let mut board_width: usize = 0;
-    let mut board_height: usize = 0;
+    let mut board_width: usize = 10;
+    let mut board_height: usize = 10;
 
     //Used to temporarily hold the width or height input by the user
     let mut current_size_input: usize = 0;
@@ -336,15 +342,15 @@ async fn main() {
             let (mouse_position_x, mouse_position_y) = mouse_position();
             let cell_coordinate_x = (mouse_position_x / cell_size).floor() as usize;
             let cell_coordinate_y = (mouse_position_y / cell_size).floor() as usize;
-            game_board.swap_cell_state(cell_coordinate_x, cell_coordinate_y);
+            game_board.toggle_cell_state(cell_coordinate_x, cell_coordinate_y);
         }
 
         //I draw each cell
-        for y in 0..game_board.0.len() {
-            for x in 0..game_board.0[y].len() {
+        for x in 0..game_board.width {
+            for y in 0..game_board.length {
                 let x_screen_pos = (x as f32) * cell_size;
                 let y_screen_pos = (y as f32) * cell_size;
-                match game_board.get_cell_status(x, y) {
+                match game_board[(x,y)] {
                     CellState::Alive => {
                         draw_rectangle(x_screen_pos, y_screen_pos, cell_size, cell_size, BLACK);
                     }
@@ -401,68 +407,68 @@ mod tests {
 
     #[test]
     fn dead_cell_with_two_alive_neighbours_stays_dead() {
-        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
-        board.swap_cell_state(0, 0);
-        board.swap_cell_state(0, 1);
+        let mut board = Board::new(3, 3);
+        board.toggle_cell_state(0, 0);
+        board.toggle_cell_state(0, 1);
 
         board.update_board();
-        assert_eq!(CellState::Dead, board.get_cell_status(1, 1));
+        assert_eq!(CellState::Dead, board[(1, 1)]);
     }
 
     #[test]
     fn dead_cell_with_three_alive_neighbours_revives() {
         let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
-        board.swap_cell_state(0, 0);
-        board.swap_cell_state(0, 1);
-        board.swap_cell_state(1, 0);
+        board.toggle_cell_state(0, 0);
+        board.toggle_cell_state(0, 1);
+        board.toggle_cell_state(1, 0);
 
         board.update_board();
-        assert_eq!(CellState::Alive, board.get_cell_status(1, 1));
+        assert_eq!(CellState::Alive, board[(1, 1)]);
     }
 
     #[test]
     fn alive_cell_with_two_alive_neighbours_stays_alive() {
-        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
-        board.swap_cell_state(0, 0);
-        board.swap_cell_state(0, 1);
-        board.swap_cell_state(1, 0);
+        let mut board = Board::new(3, 3);
+        board.toggle_cell_state(0, 0);
+        board.toggle_cell_state(0, 1);
+        board.toggle_cell_state(1, 0);
 
         board.update_board();
-        assert_eq!(CellState::Alive, board.get_cell_status(1, 0));
+        assert_eq!(CellState::Alive, board[(1, 0)]);
     }
 
     #[test]
     fn alive_cell_with_three_alive_neighbours_stays_alive() {
         let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
-        board.swap_cell_state(0, 0);
-        board.swap_cell_state(0, 1);
-        board.swap_cell_state(1, 0);
-        board.swap_cell_state(1, 1);
+        board.toggle_cell_state(0, 0);
+        board.toggle_cell_state(0, 1);
+        board.toggle_cell_state(1, 0);
+        board.toggle_cell_state(1, 1);
 
         board.update_board();
-        assert_eq!(CellState::Alive, board.get_cell_status(1, 0));
+        assert_eq!(CellState::Alive, board[(1, 0)]);
     }
 
     #[test]
     fn alive_cell_with_four_alive_neighbours_dies() {
         let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
-        board.swap_cell_state(1, 1);
-        board.swap_cell_state(0, 1);
-        board.swap_cell_state(0, 2);
-        board.swap_cell_state(1, 0);
-        board.swap_cell_state(2, 0);
+        board.toggle_cell_state(1, 1);
+        board.toggle_cell_state(0, 1);
+        board.toggle_cell_state(0, 2);
+        board.toggle_cell_state(1, 0);
+        board.toggle_cell_state(2, 0);
 
         board.update_board();
-        assert_eq!(CellState::Dead, board.get_cell_status(1, 1));
+        assert_eq!(CellState::Dead, board[(1, 1)]);
     }
 
     #[test]
     fn alive_cell_with_one_alive_neighbour_dies() {
         let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
-        board.swap_cell_state(1, 1);
-        board.swap_cell_state(1, 0);
+        board.toggle_cell_state(1, 1);
+        board.toggle_cell_state(1, 0);
 
         board.update_board();
-        assert_eq!(CellState::Dead, board.get_cell_status(1, 1));
+        assert_eq!(CellState::Dead, board[(1, 1)]);
     }
 }
