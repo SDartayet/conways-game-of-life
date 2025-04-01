@@ -64,7 +64,7 @@ impl Board {
                 if (x_neighbour, y_neighbour) == (x, y) {
                     continue;
                 }
-                if self.old_board[x_neighbour * self.width + y_neighbour] == CellState::Alive {
+                if self.old_board[y_neighbour * self.width + x_neighbour] == CellState::Alive {
                     alive_neighbours += 1;
                 }
             }
