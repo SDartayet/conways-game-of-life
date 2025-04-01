@@ -369,14 +369,14 @@ async fn main() {
                 LIGHTGRAY,
             );
         } else {
-            if is_key_pressed(KeyCode::Left) {
+            if is_key_pressed(KeyCode::Right) {
                 if current_speed_index < 4 {
                     current_speed_index += 1;
                 }
                 last_text_update = get_time();
             }
 
-            if is_key_pressed(KeyCode::Right) {
+            if is_key_pressed(KeyCode::Left) {
                 if current_speed_index > 0 {
                     current_speed_index -= 1;
                 }
