@@ -1,4 +1,4 @@
-use std::ops::{Index, IndexMut, Range, RangeInclusive};
+use std::ops::{Index, IndexMut, RangeInclusive};
 
 use macroquad::{color::*, prelude::*};
 
@@ -118,9 +118,6 @@ fn is_input_numeric() -> bool {
         || is_key_pressed(KeyCode::Key8)
         || is_key_pressed(KeyCode::Key9)
 }
-
-const DEFAULT_BOARD_LENGTH: usize = 5;
-const DEFAULT_BOARD_WIDTH: usize = 5;
 
 #[macroquad::main("Conway's Game of Life")]
 async fn main() {
@@ -416,7 +413,7 @@ mod tests {
 
     #[test]
     fn dead_cell_with_three_alive_neighbours_revives() {
-        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
+        let mut board = Board::new(3, 3);
         board.toggle_cell_state(0, 0);
         board.toggle_cell_state(0, 1);
         board.toggle_cell_state(1, 0);
@@ -438,7 +435,7 @@ mod tests {
 
     #[test]
     fn alive_cell_with_three_alive_neighbours_stays_alive() {
-        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
+        let mut board = Board::new(3, 3);
         board.toggle_cell_state(0, 0);
         board.toggle_cell_state(0, 1);
         board.toggle_cell_state(1, 0);
@@ -450,7 +447,7 @@ mod tests {
 
     #[test]
     fn alive_cell_with_four_alive_neighbours_dies() {
-        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
+        let mut board = Board::new(4, 4);
         board.toggle_cell_state(1, 1);
         board.toggle_cell_state(0, 1);
         board.toggle_cell_state(0, 2);
@@ -463,7 +460,7 @@ mod tests {
 
     #[test]
     fn alive_cell_with_one_alive_neighbour_dies() {
-        let mut board = Board::new(DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_LENGTH);
+        let mut board = Board::new(3, 3);
         board.toggle_cell_state(1, 1);
         board.toggle_cell_state(1, 0);
 
