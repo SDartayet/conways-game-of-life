@@ -295,10 +295,10 @@ async fn main() {
             BLACK,
         );
         draw_text(
-            "(use left and right to swap between width and height)",
-            window_width / 5.,
+            "(use left and right to swap between width and height, input a number with numkeys, delete with minus)",
+            window_width / 200.,
             9. * window_height / text_lines,
-            20.,
+            18.,
             BLACK,
         );
 
