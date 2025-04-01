@@ -93,7 +93,7 @@ impl Index<(usize, usize)> for Board {
     /// Input: x and y coordinates of the cell
     /// Output: whether the cell is dead or alive
     fn index(&self, (x, y): (usize, usize)) -> &CellState {
-        &self.board[y * self.length + x]
+        &self.board[y * self.width + x]
     }
 }
 
@@ -102,7 +102,7 @@ impl IndexMut<(usize, usize)> for Board {
     /// Input: x and y coordinates of the cell
     /// Output: a mutable reference to the cell state
     fn index_mut(&mut self, (x, y): (usize, usize)) -> &mut CellState {
-        &mut self.board[y * self.length + x]
+        &mut self.board[y * self.width + x]
     }
 }
 
