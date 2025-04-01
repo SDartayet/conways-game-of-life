@@ -13,7 +13,7 @@ struct Board {
     board: Vec<CellState>,
     old_board: Vec<CellState>,
     width: usize,
-    length: usize
+    length: usize,
 }
 
 impl Board {
@@ -22,16 +22,21 @@ impl Board {
     fn new(width: usize, length: usize) -> Self {
         let board = vec![CellState::Dead; width * length];
         let old_board = board.clone();
-        Board{ board, old_board, width, length }
+        Board {
+            board,
+            old_board,
+            width,
+            length,
+        }
     }
 
     /// Swaps a specific position in an already existing board.
     /// Input: a mutable reference to the board, and the row and column of the cell to update
     /// NOT the cell udpate function, this one is intended to be used for the user to manually flip the states of cells before the game starts
     fn toggle_cell_state(&mut self, x: usize, y: usize) {
-        match self[(x,y)] {
-            CellState::Alive => self[(x,y)] = CellState::Dead,
-            CellState::Dead => self[(x,y)] = CellState::Alive
+        match self[(x, y)] {
+            CellState::Alive => self[(x, y)] = CellState::Dead,
+            CellState::Dead => self[(x, y)] = CellState::Alive,
         }
     }
 
@@ -47,25 +52,19 @@ impl Board {
 
     fn update_cell_state(&mut self, x: usize, y: usize) {
         // Creates offset ranges for the neighbours, based on which offsets would be valid for the current position, so as to prevent overflow or underflow of indexes
-        let x_neighbours = RangeInclusive::new (
-            x.checked_sub(1).unwrap_or(0),  
-            (self.width - 1).min(x + 1), 
-        );
-        let y_neighbours = RangeInclusive::new (
-            y.checked_sub(1).unwrap_or(0),  
-            (self.length - 1).min(y + 1), 
-        );
+        let x_neighbours =
+            RangeInclusive::new(x.checked_sub(1).unwrap_or(0), (self.width - 1).min(x + 1));
+        let y_neighbours =
+            RangeInclusive::new(y.checked_sub(1).unwrap_or(0), (self.length - 1).min(y + 1));
 
         // Go through each neighbour and count the alive ones
         let mut alive_neighbours: u8 = 0;
         for x_neighbour in x_neighbours {
             for y_neighbour in y_neighbours.clone() {
-                if (x_neighbour, y_neighbour) == (x,y) {
+                if (x_neighbour, y_neighbour) == (x, y) {
                     continue;
                 }
-                if self.old_board[x_neighbour * self.width + y_neighbour]
-                    == CellState::Alive
-                {
+                if self.old_board[x_neighbour * self.width + y_neighbour] == CellState::Alive {
                     alive_neighbours += 1;
                 }
             }
@@ -74,14 +73,14 @@ impl Board {
         //Change the cell state according to the number of neighbours
         match alive_neighbours {
             0..=1 => {
-                self[(x,y)] = CellState::Dead;
+                self[(x, y)] = CellState::Dead;
             }
             3 => {
-                self[(x,y)] = CellState::Alive;
+                self[(x, y)] = CellState::Alive;
             }
             4.. => {
-                self[(x,y)] = CellState::Dead;
-            },
+                self[(x, y)] = CellState::Dead;
+            }
             _ => {}
         }
     }
@@ -350,7 +349,7 @@ async fn main() {
             for y in 0..game_board.length {
                 let x_screen_pos = (x as f32) * cell_size;
                 let y_screen_pos = (y as f32) * cell_size;
-                match game_board[(x,y)] {
+                match game_board[(x, y)] {
                     CellState::Alive => {
                         draw_rectangle(x_screen_pos, y_screen_pos, cell_size, cell_size, BLACK);
                     }
