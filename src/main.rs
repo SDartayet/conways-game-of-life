@@ -138,11 +138,11 @@ async fn main() {
 
     //Speeds. Each one contains the update interval for the board, and the speed to display when updated
     let speeds = [
-        ("Speed: 0.25x", 2.),
-        ("Speed: 0.5x", 1.),
+        ("Speed: 0.25x", 0.125),
+        ("Speed: 0.5x", 0.25),
         ("Speed: 1x", 0.5),
-        ("Speed: 2x", 0.25),
-        ("Speed: 4x", 0.125),
+        ("Speed: 2x", 1.),
+        ("Speed: 4x", 2.),
     ];
     let mut current_speed_index = 2;
 
@@ -150,7 +150,7 @@ async fn main() {
     let mut board_height: usize = 10;
 
     //Used to temporarily hold the width or height input by the user
-    let mut current_size_input: usize = 0;
+    let mut current_size_input: usize = 10;
 
     //Used to konw whether width or height is selected in initial menu
     let mut currently_selected_width = true;
@@ -312,7 +312,7 @@ async fn main() {
     //If the board is wider than it is larger, I adapt the height. Else, I adapt the width accordingly
     //I do this since most screens are wider than they are long
     if board_proportions >= 1. {
-        window_width = screen_width() * 4. / 5.;
+        window_width = screen_width();
         window_height = window_width / board_proportions;
     } else {
         window_height = screen_height();
@@ -320,7 +320,7 @@ async fn main() {
     }
     let cell_size = window_width / (board_width as f32);
     //Since the OS bar on top of the window is counted for the height, I need to add a bit to it
-    window_height += 0.08 * screen_height();
+    //window_height += 0.08 * screen_height();
     request_new_screen_size(window_width, window_height);
     next_frame();
 
@@ -334,7 +334,8 @@ async fn main() {
         if current_time >= (last_update + speeds[current_speed_index].1) && !is_game_paused {
             last_update = current_time;
             game_board.update_board();
-        } else if is_mouse_button_pressed(MouseButton::Left) {
+        }
+        if is_game_paused && is_mouse_button_pressed(MouseButton::Left) {
             let (mouse_position_x, mouse_position_y) = mouse_position();
             let cell_coordinate_x = (mouse_position_x / cell_size).floor() as usize;
             let cell_coordinate_y = (mouse_position_y / cell_size).floor() as usize;
@@ -367,7 +368,7 @@ async fn main() {
                 window_width / 80.,
                 window_height / 15.,
                 42.,
-                BLACK,
+                LIGHTGRAY,
             );
         } else {
             if is_key_pressed(KeyCode::Left) {
@@ -390,7 +391,7 @@ async fn main() {
                 window_width / 80.,
                 window_height / 15.,
                 42.,
-                BLACK,
+                LIGHTGRAY,
             );
         }
         next_frame().await;
